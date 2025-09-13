@@ -26,7 +26,7 @@ weatherForm.addEventListener("submit", async (event) => {
 });
 
 async function getWeatherCoordsByName(city) {
-  const endpoint = `http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=5&appid=${apiKey}`;
+  const endpoint = `https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=5&appid=${apiKey}`;
   const responce = await fetch(endpoint);
 
   if (!responce.ok) {
