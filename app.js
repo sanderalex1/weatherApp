@@ -10,7 +10,11 @@ weatherForm.addEventListener("submit", async (event) => {
 
   if (city) {
     try {
-      const weatherData = await getWeatherData(city);
+      const weatherCoords = await getWeatherCoordsByName(city);
+      const weatherData = await getWeatherDataByCoords(
+        weatherCoords[0].lat,
+        weatherCoords[0].lon
+      );
       displayWeatherInfo(weatherData);
     } catch (error) {
       console.log(error);
@@ -21,10 +25,20 @@ weatherForm.addEventListener("submit", async (event) => {
   }
 });
 
-async function getWeatherData(city) {
-  const apiUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=5&appid=${apiKey}`;
+async function getWeatherCoordsByName(city) {
+  const endpoint = `http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=5&appid=${apiKey}`;
+  const responce = await fetch(endpoint);
 
-  const responce = await fetch(apiUrl);
+  if (!responce.ok) {
+    throw new Error("Could not fetch weather data");
+  }
+
+  return await responce.json();
+}
+
+async function getWeatherDataByCoords(lat, lon) {
+  const endpoint = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+  const responce = await fetch(endpoint);
 
   if (!responce.ok) {
     throw new Error("Could not fetch weather data");
@@ -36,7 +50,7 @@ async function getWeatherData(city) {
 function displayWeatherInfo(data) {
   const {
     name: city,
-    current: { temp, humidity },
+    main: { temp, humidity },
     weather: [{ description, id }],
   } = data;
 
@@ -49,14 +63,48 @@ function displayWeatherInfo(data) {
   const descDisplay = document.createElement("p");
   const WeatherEmoji = document.createElement("p");
 
+  cityDisplay.classList.add("cityDisplay");
   cityDisplay.textContent = city;
 
-  city.classList.add("cityDisplay");
+  tempDisplay.classList.add("tempDisplay");
+  tempDisplay.textContent = `${(temp - 273.15).toFixed(1)}°C`;
 
-  card.append(cityDisplay);
+  humidityDisplay.classList.add("humidityDisplay");
+  humidityDisplay.textContent = `Humidity: ${humidity}%`;
+
+  descDisplay.classList.add("descDisplay");
+  descDisplay.textContent = description;
+
+  WeatherEmoji.classList.add("WeatherEmoji");
+  WeatherEmoji.textContent = getWeatherEmoji(id);
+
+  card.appendChild(cityDisplay);
+  card.appendChild(tempDisplay);
+  card.appendChild(humidityDisplay);
+  card.appendChild(descDisplay);
+  card.appendChild(WeatherEmoji);
 }
 
-function getWeatherEmoji(weatherId) {}
+function getWeatherEmoji(weatherId) {
+  switch (true) {
+    case weatherId >= 200 && weatherId < 300:
+      return "⛈️";
+    case weatherId >= 300 && weatherId < 400:
+      return "🌧️";
+    case weatherId >= 500 && weatherId < 600:
+      return "🌧️";
+    case weatherId >= 600 && weatherId < 700:
+      return "❄️";
+    case weatherId >= 700 && weatherId < 800:
+      return "🌫️";
+    case weatherId === 800:
+      return "🌞";
+    case weatherId >= 801 && weatherId < 810:
+      return "☁️";
+    default:
+      return "❓";
+  }
+}
 
 function displayError(message) {
   const errorDisplay = document.createElement("p");
